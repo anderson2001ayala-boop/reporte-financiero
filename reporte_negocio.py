@@ -181,4 +181,8 @@ st.download_button(
     data=output.getvalue(),
     file_name=f"reporte_{nombre.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+<<<<<<< HEAD
 )
+=======
+)
+>>>>>>> 8b609e06b45f8c0050d6e669ee17a70c1f569770
