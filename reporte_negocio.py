@@ -162,22 +162,42 @@ st.success(f"🏆 '{dia_max}' es tu mejor día ({fmt(ventas_semana[dia_max])}). 
 st.divider()
 
 st.subheader("📥 Exportar Reporte")
+
+# Generar gráfica para Excel
+img_buffer = io.BytesIO()
+fig.savefig(img_buffer, format='png', dpi=120, bbox_inches='tight', facecolor='#0f0f0f')
+img_buffer.seek(0)
+
 output = io.BytesIO()
 with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    # Hoja ventas
     df_ventas = pd.DataFrame(list(ventas_semana.items()), columns=['Día', 'Ventas'])
     df_ventas.to_excel(writer, sheet_name='Ventas por Día', index=False)
+    
+    # Hoja gastos
     df_gastos = pd.DataFrame(list(gastos_semana.items()), columns=['Concepto', 'Monto'])
     df_gastos['% del total'] = [f"{(v/gastos_totales)*100:.1f}%" for v in gastos_semana.values()]
     df_gastos.to_excel(writer, sheet_name='Gastos', index=False)
+    
+    # Hoja resumen
     resumen = {
         'Métrica': ['Ventas Totales','Gastos Totales','Ganancia Neta','Margen Neto','Promedio Diario','Mejor Día','Peor Día'],
         'Valor': [fmt(ventas_totales), fmt(gastos_totales), fmt(ganancia_neta),
                   f'{margen_neto:.1f}%', fmt(promedio_diario), dia_max, dia_min]
     }
     pd.DataFrame(resumen).to_excel(writer, sheet_name='Resumen', index=False)
+    
+    # Hoja con gráfica
+    from openpyxl import load_workbook
+    from openpyxl.drawing.image import Image as XLImage
+    ws = writer.book.create_sheet('Gráficas')
+    img = XLImage(img_buffer)
+    img.width = 900
+    img.height = 500
+    ws.add_image(img, 'A1')
 
 st.download_button(
-    label="⬇️ Descargar Reporte Excel",
+    label="⬇️ Descargar Reporte Excel con Gráficas",
     data=output.getvalue(),
     file_name=f"reporte_{nombre.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
